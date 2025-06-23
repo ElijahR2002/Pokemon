@@ -7,19 +7,81 @@
         <v-btn color="primary" @click="dialog = true" class="mb-4">Add New Card</v-btn>
 
         <v-dialog v-model="dialog" max-width="600">
-          <v-card rounded="lg">
-            <v-card-title>Add New Card</v-card-title>
+          <v-card rounded="lg" class="pa-4">
+            <v-card-title class="text-h6 pb-0">Add New Card</v-card-title>
+
             <v-card-text>
               <v-form @submit.prevent="addCard">
-                <v-text-field v-model="newCard.cardName" label="Card Name" required />
-                <v-text-field v-model="newCard.set" label="Set" />
-                <v-text-field v-model="newCard.color" label="Color" />
-                <v-text-field v-model.number="newCard.purchasedPrice" label="Purchase Price" type="number" />
-                <v-text-field v-model.number="newCard.sellPrice" label="Sell Price" type="number" />
-                <v-text-field v-model="newCard.condition" label="Condition" />
-                <v-text-field v-model="newCard.Number" label="Number" />
+                <v-row dense>
+                  <v-col cols="12">
+                    <v-text-field
+                      v-model="newCard.cardName"
+                      label="Card Name"
+                      variant="outlined"
+                      density="compact"
+                      required
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="newCard.set"
+                      label="Set"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="newCard.color"
+                      label="Color"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model.number="newCard.purchasedPrice"
+                      label="Purchase Price"
+                      type="number"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model.number="newCard.sellPrice"
+                      label="Sell Price"
+                      type="number"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="newCard.condition"
+                      label="Condition"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="newCard.Number"
+                      label="Number"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                </v-row>
               </v-form>
             </v-card-text>
+
             <v-card-actions>
               <v-spacer />
               <v-btn text @click="dialog = false">Cancel</v-btn>
@@ -27,6 +89,7 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+
         <v-row>
           <v-col
             v-for="card in cards"
