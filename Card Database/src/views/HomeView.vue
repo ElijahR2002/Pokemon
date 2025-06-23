@@ -32,11 +32,11 @@
             v-for="card in cards"
             :key="card.id"
             cols="12"
-            md="4"
+            md="3"
           >
-            <v-card class="mb-4 pa-3 bg-blue-lighten-4" outlined elevation="2" rounded="xl">
+            <v-card class="mb-4 pa-3 bg-secondary" outlined elevation="2" rounded="xl">
               {{ card.cardName }} <br> {{ card.set }} <br> ${{ card.purchasedPrice }} <br> ${{ card.sellPrice }} <br> {{ card.condition }} <br> {{ card.Number }}<br>
-              <v-btn color="success" @click="markAsSold(card)" class="mr-2">Mark as Sold</v-btn>
+              <v-btn color="primary" @click="markAsSold(card)" class="mr-2">Mark as Sold</v-btn>
               <v-btn color="error" @click="removeCard(card.id)">Delete</v-btn>
             </v-card>
           </v-col>
