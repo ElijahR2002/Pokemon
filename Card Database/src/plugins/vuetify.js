@@ -1,8 +1,8 @@
 // src/plugins/vuetify.js
-import 'vuetify/styles';
-import { createVuetify } from 'vuetify';
-import * as components from 'vuetify/components';
-import * as directives from 'vuetify/directives';
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
 
 export default createVuetify({
   components,
@@ -14,15 +14,16 @@ export default createVuetify({
       myTheme: {
         dark: false,
         colors: {
-          primary: '#be19c8 ',      // Blue
-          secondary: '##30f943 ',    // Grey
+          primary: '#272838 ',
+          secondary: '#afcbd5 ',
           accent: '#82B1FF',
           error: '#FF5252',
           info: '#2196F3',
           success: '#4CAF50',
           warning: '#FFC107',
+          edit: '#F2B418',
         },
       },
     },
   },
-});
+})

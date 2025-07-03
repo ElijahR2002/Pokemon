@@ -1,17 +1,43 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { db } from './firebase'
+import { collection, getDocs } from 'firebase/firestore'
+
+// Reactive profit variable
+const runningProfit = ref(0)
+const collectionOwner = 'Elijah_Mason'
+
+const fetchProfit = async () => {
+  let profit = 0
+
+  const cardsSnap = await getDocs(collection(db, 'Collections', collectionOwner, 'Cards'))
+  cardsSnap.forEach((doc) => {
+    const data = doc.data()
+    profit -= Number(data.purchasedPrice || 0)
+  })
+
+  const soldSnap = await getDocs(collection(db, 'Collections', collectionOwner, 'Sold_Cards'))
+  soldSnap.forEach((doc) => {
+    const data = doc.data()
+    profit += Number(data.sellPrice || 0)
+  })
+
+  runningProfit.value = profit
+}
+
+onMounted(fetchProfit)
 </script>
 
 <template>
   <v-app>
     <!-- Top Navigation Bar -->
     <v-app-bar app color="primary" dark>
-      <v-app-bar-title>Card Tracker</v-app-bar-title>
+      <v-app-bar-title>Profit: ${{ runningProfit }}</v-app-bar-title>
 
-      <!-- Optional Navigation Links -->
-      <v-spacer></v-spacer>
-      <RouterLink to="/" class="text-white mx-3">Home</RouterLink>
-      <RouterLink to="/about" class="text-white mx-3">About</RouterLink>
+      <v-spacer />
+      <RouterLink to="/" class="text-white mx-3">Inventory</RouterLink>
+      <RouterLink to="/sold" class="text-white mx-3">Sold Cards</RouterLink>
     </v-app-bar>
 
     <!-- Page Content -->
@@ -25,7 +51,6 @@ import { RouterLink, RouterView } from 'vue-router'
 header {
   line-height: 1.5;
   max-height: 100vh;
-  
 }
 
 .logo {

@@ -34,8 +34,8 @@
 
                   <v-col cols="12" sm="6">
                     <v-text-field
-                      v-model="newCard.color"
-                      label="Color"
+                      v-model="newCard.cardOwner"
+                      label="Card Owner"
                       variant="outlined"
                       density="compact"
                     />
@@ -72,8 +72,8 @@
 
                   <v-col cols="12" sm="6">
                     <v-text-field
-                      v-model="newCard.Number"
-                      label="Number"
+                      v-model="newCard.cardNumber"
+                      label="Card Number"
                       variant="outlined"
                       density="compact"
                     />
@@ -90,99 +90,198 @@
           </v-card>
         </v-dialog>
 
+        <v-dialog v-model="editDialog" max-width="600">
+          <v-card rounded="lg" class="pa-4">
+            <v-card-title class="text-h6 pb-0">Edit Card</v-card-title>
+
+            <v-card-text>
+              <v-form @submit.prevent="updateCard" v-if="selectedCard">
+                <v-row dense>
+                  <v-col cols="12">
+                    <v-text-field
+                      v-model="selectedCard.cardName"
+                      label="Card Name"
+                      variant="outlined"
+                      density="compact"
+                      required
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="selectedCard.set"
+                      label="Set"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="selectedCard.cardOwner"
+                      label="Card Owner"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model.number="selectedCard.purchasedPrice"
+                      label="Purchase Price"
+                      type="number"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model.number="selectedCard.sellPrice"
+                      label="Sell Price"
+                      type="number"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="selectedCard.condition"
+                      label="Condition"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="selectedCard.cardNumber"
+                      label="Card Number"
+                      variant="outlined"
+                      density="compact"
+                    />
+                  </v-col>
+                </v-row>
+              </v-form>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer />
+              <v-btn text @click="editDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="updateCard">Save Changes</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
         <v-row>
-          <v-col
-            v-for="card in cards"
-            :key="card.id"
-            cols="12"
-            md="3"
-          >
-            <v-card class="mb-4 pa-3 bg-secondary" outlined elevation="2" rounded="xl">
-              {{ card.cardName }} <br> {{ card.set }} <br> ${{ card.purchasedPrice }} <br> ${{ card.sellPrice }} <br> {{ card.condition }} <br> {{ card.Number }}<br>
+          <v-col v-for="card in cards" :key="card.id" cols="12" md="4">
+            <v-card
+              class="mb-4 pa-3 bg-secondary"
+              outlined
+              elevation="2"
+              rounded="xl"
+              font-weight-bold
+            >
+              Card: {{ card.cardName }} <br />
+              Set: {{ card.set }} <br />
+              Owned by: {{ card.cardOwner }} <br />
+              Bought For: ${{ card.purchasedPrice }} <br />
+              Selling For: ${{ card.sellPrice }} <br />
+              Condition: {{ card.condition }} <br />
+              Card Number: {{ card.cardNumber }}<br />
               <v-btn color="primary" @click="markAsSold(card)" class="mr-2">Mark as Sold</v-btn>
               <v-btn color="error" @click="removeCard(card.id)">Delete</v-btn>
+              <v-btn
+                color="edit"
+                @click="editCard(card.id)"
+                class="position-absolute top-0 right-0 ma-2"
+                >Edit</v-btn
+              >
             </v-card>
           </v-col>
         </v-row>
-
-
-          <h2>Total Profit: ${{ profit.toFixed(2) }}</h2>
       </v-col>
-  </v-row>
-</v-container>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { db } from '../firebase';
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  updateDoc
-} from 'firebase/firestore';
+import { ref, onMounted, computed } from 'vue'
+import { db } from '../firebase'
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
 
-const dialog = ref(false);
-
-const cards = ref([]);
+const dialog = ref(false)
+const editDialog = ref(false)
+const collectionOwner = 'Elijah_Mason'
+const cardCollectionRef = collection(db, 'Collections', collectionOwner, 'Cards')
+const selectedCard = ref(null)
+const cards = ref([])
 const newCard = ref({
   cardName: '',
   set: '',
-  color: '',
+  cardOwner: '',
   purchasedPrice: 0,
   sellPrice: 0,
   condition: '',
   sold: false,
-  Number: ''
-});
+  cardNumber: '',
+})
 
 const fetchCards = async () => {
-  cards.value = [];
-  const querySnapshot = await getDocs(collection(db, "Cards"));
-  querySnapshot.forEach(docSnap => {
-    cards.value.push({ id: docSnap.id, ...docSnap.data() });
-  });
-  console.log(cards.value);
-};
+  cards.value = []
+  const querySnapshot = await getDocs(cardCollectionRef)
+  querySnapshot.forEach((docSnap) => {
+    cards.value.push({ id: docSnap.id, ...docSnap.data() })
+  })
+  console.log(cards.value)
+}
 
 const addCard = async () => {
-  await addDoc(collection(db, "Cards"), newCard.value);
+  await addDoc(cardCollectionRef, newCard.value)
   newCard.value = {
     cardName: '',
     set: '',
-    color: '',
+    cardOwner: '',
     purchasedPrice: 0,
     sellPrice: 0,
     condition: '',
     sold: false,
-    Number: ''
-  };
-  fetchCards();
-};
+    cardNumber: '',
+  }
+  fetchCards()
+}
+
+const editCard = (id) => {
+  const cardToEdit = cards.value.find((card) => card.id === id)
+  if (cardToEdit) {
+    selectedCard.value = { ...cardToEdit } // clone to avoid binding to original
+    editDialog.value = true
+  }
+}
+
+const updateCard = async () => {
+  const id = selectedCard.value.id
+  const { id: _, ...cardData } = selectedCard.value // exclude id from update
+  await updateDoc(doc(db, 'Collections', collectionOwner, 'Cards', id), cardData)
+  editDialog.value = false
+  selectedCard.value = null
+  fetchCards()
+}
 
 const removeCard = async (id) => {
-  await deleteDoc(doc(db, "Cards", id));
-  fetchCards();
-};
+  await deleteDoc(doc(db, 'Collections', collectionOwner, 'Cards', id))
+  fetchCards()
+}
 
 const markAsSold = async (card) => {
-  await updateDoc(doc(db, "Cards", card.id), {
-    sold: true
-  });
-  fetchCards();
-};
+  if (card.sold) return
 
-const profit = computed(() =>
-  cards.value.reduce((total, card) => {
-    if (card.sold) {
-      return total + (card.sellPrice - card.purchasedPrice);
-    } else {
-      return total - card.purchasedPrice;
-    }
-  }, 0)
-);
+  const cardRef = doc(db, 'Collections', collectionOwner, 'Cards', card.id)
+  const soldRef = doc(db, 'Collections', collectionOwner, 'Sold_Cards', card.id)
 
-onMounted(fetchCards);
+  const updatedCard = { ...card, sold: true }
+
+  await updateDoc(cardRef, { sold: true })
+
+  await setDoc(soldRef, updatedCard)
+
+  removeCard(card.id)
+}
+
+onMounted(fetchCards)
 </script>
