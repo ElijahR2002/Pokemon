@@ -201,14 +201,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { db } from '../firebase'
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
+import { useProfitStore } from '@/stores/profit'
+import { useCollectionStore } from '../stores/collection'
 
 const dialog = ref(false)
 const editDialog = ref(false)
-const collectionOwner = 'Elijah_Mason'
-const cardCollectionRef = collection(db, 'Collections', collectionOwner, 'Cards')
+const collectionStore = useCollectionStore()
+const collectionOwner = computed(() => collectionStore.collectionOwner)
+
+const cardCollectionRef = computed(() =>
+  collection(db, 'Collections', collectionOwner.value, 'Cards'),
+)
 const selectedCard = ref(null)
 const cards = ref([])
 const newCard = ref({
@@ -223,16 +229,21 @@ const newCard = ref({
 })
 
 const fetchCards = async () => {
+  if (!collectionOwner.value) return
   cards.value = []
-  const querySnapshot = await getDocs(cardCollectionRef)
+  const querySnapshot = await getDocs(cardCollectionRef.value)
+  const profitStore = useProfitStore()
   querySnapshot.forEach((docSnap) => {
     cards.value.push({ id: docSnap.id, ...docSnap.data() })
   })
-  console.log(cards.value)
+  await profitStore.fetchProfit()
 }
+watch(collectionOwner, async (newOwner) => {
+  if (newOwner) await fetchCards()
+})
 
 const addCard = async () => {
-  await addDoc(cardCollectionRef, newCard.value)
+  await addDoc(cardCollectionRef.value, newCard.value)
   newCard.value = {
     cardName: '',
     set: '',
@@ -257,22 +268,22 @@ const editCard = (id) => {
 const updateCard = async () => {
   const id = selectedCard.value.id
   const { id: _, ...cardData } = selectedCard.value // exclude id from update
-  await updateDoc(doc(db, 'Collections', collectionOwner, 'Cards', id), cardData)
+  await updateDoc(doc(db, 'Collections', collectionStore.collectionOwner, 'Cards', id), cardData)
   editDialog.value = false
   selectedCard.value = null
   fetchCards()
 }
 
 const removeCard = async (id) => {
-  await deleteDoc(doc(db, 'Collections', collectionOwner, 'Cards', id))
+  await deleteDoc(doc(db, 'Collections', collectionStore.collectionOwner, 'Cards', id))
   fetchCards()
 }
 
 const markAsSold = async (card) => {
   if (card.sold) return
 
-  const cardRef = doc(db, 'Collections', collectionOwner, 'Cards', card.id)
-  const soldRef = doc(db, 'Collections', collectionOwner, 'Sold_Cards', card.id)
+  const cardRef = doc(db, 'Collections', collectionStore.collectionOwner, 'Cards', card.id)
+  const soldRef = doc(db, 'Collections', collectionStore.collectionOwner, 'Sold_Cards', card.id)
 
   const updatedCard = { ...card, sold: true }
 

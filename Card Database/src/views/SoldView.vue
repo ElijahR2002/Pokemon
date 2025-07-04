@@ -56,16 +56,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { db } from '../firebase'
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
+import { collection, getDocs, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
+import { useProfitStore } from '@/stores/profit'
+import { useCollectionStore } from '../stores/collection'
 
-// Card data
+// Stores
+const profitStore = useProfitStore()
+const collectionStore = useCollectionStore()
+
+// Reactive collection owner
+const collectionOwner = computed(() => collectionStore.collectionOwner)
+
+// State
 const cards = ref([])
 const unmarkDialog = ref(false)
 const selectedCard = ref(null)
+const search = ref('')
 
-// Define table headers
+// Headers
 const headers = [
   { title: 'Unmark as Sold', value: 'actions', sortable: false },
   { title: 'Card Name', value: 'cardName' },
@@ -77,46 +87,52 @@ const headers = [
   { title: 'Card Number', value: 'cardNumber' },
 ]
 
-// Firestore query
-const collectionOwner = 'Elijah_Mason'
-const search = ref('')
-const cardCollectionRef = collection(db, 'Collections', collectionOwner, 'Sold_Cards')
-
+// Fetch cards
 const fetchCards = async () => {
-  cards.value = []
+  if (!collectionOwner.value) return
+
+  const cardCollectionRef = collection(db, 'Collections', collectionOwner.value, 'Sold_Cards')
   const querySnapshot = await getDocs(cardCollectionRef)
-  querySnapshot.forEach((docSnap) => {
-    cards.value.push({ id: docSnap.id, ...docSnap.data() })
-  })
+  cards.value = querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }))
+
+  await profitStore.fetchProfit()
 }
 
+// Unmark logic
 const openUnmarkDialog = (card) => {
   selectedCard.value = card
   unmarkDialog.value = true
 }
 
 const unmarkAsSold = async () => {
-  unmarkDialog.value = false
   const card = selectedCard.value
-  if (!card || !card.sold) return
+  if (!card || !collectionOwner.value) return
 
-  const cardRef = doc(db, 'Collections', collectionOwner, 'Cards', card.id)
-  const soldRef = doc(db, 'Collections', collectionOwner, 'Sold_Cards', card.id)
+  unmarkDialog.value = false
+
+  const cardRef = doc(db, 'Collections', collectionOwner.value, 'Cards', card.id)
+  const soldRef = doc(db, 'Collections', collectionOwner.value, 'Sold_Cards', card.id)
 
   const updatedCard = { ...card, sold: false }
-  await updateDoc(soldRef, { sold: false })
 
-  await setDoc(cardRef, updatedCard)
+  await updateDoc(soldRef, { sold: false }) // mark sold = false in Sold_Cards
+  await setDoc(cardRef, updatedCard) // move to active Cards
+  await deleteDoc(soldRef) // delete from Sold_Cards
 
-  removeCard(card.id)
-}
-
-const removeCard = async (id) => {
-  await deleteDoc(doc(db, 'Collections', collectionOwner, 'Sold_Cards', id))
   fetchCards()
 }
+
+// Re-fetch when collectionOwner changes
+watch(collectionOwner, () => {
+  fetchCards()
+})
+
 onMounted(fetchCards)
 </script>
+
 <style scoped>
 ::v-deep(.v-data-table__th),
 ::v-deep(.v-data-table__td) {

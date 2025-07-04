@@ -1,49 +1,65 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import { ref, onMounted } from 'vue'
-import { db } from './firebase'
-import { collection, getDocs } from 'firebase/firestore'
+import { onMounted } from 'vue'
+import { useProfitStore } from './stores/profit'
+import { useCollectionStore } from './stores/collection'
+import { useUserStore } from './stores/user'
+import router from './router'
 
-// Reactive profit variable
-const runningProfit = ref(0)
-const collectionOwner = 'Elijah_Mason'
-
-const fetchProfit = async () => {
-  let profit = 0
-
-  const cardsSnap = await getDocs(collection(db, 'Collections', collectionOwner, 'Cards'))
-  cardsSnap.forEach((doc) => {
-    const data = doc.data()
-    profit -= Number(data.purchasedPrice || 0)
-  })
-
-  const soldSnap = await getDocs(collection(db, 'Collections', collectionOwner, 'Sold_Cards'))
-  soldSnap.forEach((doc) => {
-    const data = doc.data()
-    profit += Number(data.sellPrice || 0)
-  })
-
-  runningProfit.value = profit
+const profitStore = useProfitStore()
+const collectionStore = useCollectionStore()
+const userStore = useUserStore()
+const handleLogout = async () => {
+  await userStore.logout()
+  router.push('/login')
 }
 
-onMounted(fetchProfit)
+onMounted(async () => {
+  await userStore.fetchUser()
+  if (userStore.user) {
+    await profitStore.fetchProfit()
+    await collectionStore.fetchCollectionOwners()
+  }
+})
 </script>
 
 <template>
   <v-app>
-    <!-- Top Navigation Bar -->
-    <v-app-bar app color="primary" dark>
-      <v-app-bar-title>Profit: ${{ runningProfit }}</v-app-bar-title>
+    <div v-if="!userStore.loading">
+      <!-- Top Navigation Bar -->
+      <v-app-bar v-if="userStore.user" app color="primary" dark>
+        <v-app-bar-title>Profit: ${{ profitStore.runningProfit }}</v-app-bar-title>
 
-      <v-spacer />
-      <RouterLink to="/" class="text-white mx-3">Inventory</RouterLink>
-      <RouterLink to="/sold" class="text-white mx-3">Sold Cards</RouterLink>
-    </v-app-bar>
+        <v-spacer />
+        <RouterLink to="/" class="text-white mx-3">Inventory</RouterLink>
+        <RouterLink to="/sold" class="text-white mx-3">Sold Cards</RouterLink>
 
-    <!-- Page Content -->
-    <v-main>
-      <RouterView />
-    </v-main>
+        <v-select
+          class="mx-3"
+          label="Collection"
+          :items="collectionStore.collectionOwners"
+          v-model="collectionStore.collectionOwner"
+          dense
+          variant="outlined"
+          hide-details
+          style="max-width: 200px"
+        />
+
+        <v-btn
+          v-if="userStore.user"
+          variant="outlined"
+          color="white"
+          class="ml-4"
+          @click="handleLogout"
+        >
+          Logout
+        </v-btn>
+      </v-app-bar>
+
+      <!-- Page Content -->
+      <v-main>
+        <RouterView />
+      </v-main>
+    </div>
   </v-app>
 </template>
 
