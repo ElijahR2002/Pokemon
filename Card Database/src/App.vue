@@ -1,23 +1,72 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { onMounted } from 'vue'
+import { useProfitStore } from './stores/profit'
+import { useCollectionStore } from './stores/collection'
+import { useUserStore } from './stores/user'
+import { useInventoryStore } from './stores/inventory'
+import router from './router'
+
+const profitStore = useProfitStore()
+const collectionStore = useCollectionStore()
+const userStore = useUserStore()
+const inventoryStore = useInventoryStore()
+const handleLogout = async () => {
+  await userStore.logout()
+  router.push('/login')
+}
+
+onMounted(async () => {
+  await userStore.fetchUser()
+  if (userStore.user) {
+    await profitStore.fetchProfit()
+    await collectionStore.fetchCollectionOwners()
+    await inventoryStore.fetchInventory()
+  }
+})
 </script>
 
 <template>
   <v-app>
-    <!-- Top Navigation Bar -->
-    <v-app-bar app color="primary" dark>
-      <v-app-bar-title>Card Tracker</v-app-bar-title>
+    <div v-if="!userStore.loading">
+      <!-- Top Navigation Bar -->
+      <v-app-bar v-if="userStore.user" app color="primary" dark>
+        <v-app-bar-title
+          >Profit: ${{ profitStore.runningProfit }} || Total Inventory: ${{
+            inventoryStore.runningProfit
+          }}</v-app-bar-title
+        >
 
-      <!-- Optional Navigation Links -->
-      <v-spacer></v-spacer>
-      <RouterLink to="/" class="text-white mx-3">Home</RouterLink>
-      <RouterLink to="/about" class="text-white mx-3">About</RouterLink>
-    </v-app-bar>
+        <v-spacer />
+        <RouterLink to="/" class="text-white mx-3">Inventory</RouterLink>
+        <RouterLink to="/sold" class="text-white mx-3">Sold Cards</RouterLink>
 
-    <!-- Page Content -->
-    <v-main>
-      <RouterView />
-    </v-main>
+        <v-select
+          class="mx-3"
+          label="Collection"
+          :items="collectionStore.collectionOwners"
+          v-model="collectionStore.collectionOwner"
+          dense
+          variant="outlined"
+          hide-details
+          style="max-width: 200px"
+        />
+
+        <v-btn
+          v-if="userStore.user"
+          variant="outlined"
+          color="white"
+          class="ml-4"
+          @click="handleLogout"
+        >
+          Logout
+        </v-btn>
+      </v-app-bar>
+
+      <!-- Page Content -->
+      <v-main>
+        <RouterView />
+      </v-main>
+    </div>
   </v-app>
 </template>
 
@@ -25,7 +74,6 @@ import { RouterLink, RouterView } from 'vue-router'
 header {
   line-height: 1.5;
   max-height: 100vh;
-  
 }
 
 .logo {
