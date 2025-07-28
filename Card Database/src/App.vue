@@ -3,11 +3,13 @@ import { onMounted } from 'vue'
 import { useProfitStore } from './stores/profit'
 import { useCollectionStore } from './stores/collection'
 import { useUserStore } from './stores/user'
+import { useInventoryStore } from './stores/inventory'
 import router from './router'
 
 const profitStore = useProfitStore()
 const collectionStore = useCollectionStore()
 const userStore = useUserStore()
+const inventoryStore = useInventoryStore()
 const handleLogout = async () => {
   await userStore.logout()
   router.push('/login')
@@ -18,6 +20,7 @@ onMounted(async () => {
   if (userStore.user) {
     await profitStore.fetchProfit()
     await collectionStore.fetchCollectionOwners()
+    await inventoryStore.fetchInventory()
   }
 })
 </script>
@@ -27,7 +30,11 @@ onMounted(async () => {
     <div v-if="!userStore.loading">
       <!-- Top Navigation Bar -->
       <v-app-bar v-if="userStore.user" app color="primary" dark>
-        <v-app-bar-title>Profit: ${{ profitStore.runningProfit }}</v-app-bar-title>
+        <v-app-bar-title
+          >Profit: ${{ profitStore.runningProfit }} || Total Inventory: ${{
+            inventoryStore.runningProfit
+          }}</v-app-bar-title
+        >
 
         <v-spacer />
         <RouterLink to="/" class="text-white mx-3">Inventory</RouterLink>

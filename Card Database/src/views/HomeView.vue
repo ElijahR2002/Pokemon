@@ -206,6 +206,7 @@ import { db } from '../firebase'
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
 import { useProfitStore } from '@/stores/profit'
 import { useCollectionStore } from '../stores/collection'
+import { useInventoryStore } from '@/stores/inventory'
 
 const dialog = ref(false)
 const editDialog = ref(false)
@@ -233,10 +234,12 @@ const fetchCards = async () => {
   cards.value = []
   const querySnapshot = await getDocs(cardCollectionRef.value)
   const profitStore = useProfitStore()
+  const inventoryStore = useInventoryStore()
   querySnapshot.forEach((docSnap) => {
     cards.value.push({ id: docSnap.id, ...docSnap.data() })
   })
   await profitStore.fetchProfit()
+  await inventoryStore.fetchInventory()
 }
 watch(collectionOwner, async (newOwner) => {
   if (newOwner) await fetchCards()

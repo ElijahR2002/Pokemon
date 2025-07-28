@@ -4,31 +4,24 @@ import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
 import { useCollectionStore } from '../stores/collection'
 
-export const useProfitStore = defineStore('profit', () => {
+export const useInventoryStore = defineStore('inventory', () => {
   const runningProfit = ref(0)
   const collectionStore = useCollectionStore()
   const collectionOwner = computed(() => collectionStore.collectionOwner)
-  const fetchProfit = async () => {
+  const fetchInventory = async () => {
     if (!collectionOwner.value) return
-    let profit = 0
+    let inventory = 0
 
     const cardsSnap = await getDocs(collection(db, 'Collections', collectionOwner.value, 'Cards'))
     cardsSnap.forEach((doc) => {
-      profit -= Number(doc.data().purchasedPrice || 0)
+      inventory += Number(doc.data().sellPrice || 0)
     })
 
-    const soldSnap = await getDocs(
-      collection(db, 'Collections', collectionOwner.value, 'Sold_Cards'),
-    )
-    soldSnap.forEach((doc) => {
-      profit += Number(doc.data().sellPrice || 0)
-    })
-
-    runningProfit.value = profit
+    runningProfit.value = inventory
   }
 
   return {
     runningProfit,
-    fetchProfit,
+    fetchInventory,
   }
 })

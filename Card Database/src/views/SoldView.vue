@@ -61,10 +61,12 @@ import { db } from '../firebase'
 import { collection, getDocs, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
 import { useProfitStore } from '@/stores/profit'
 import { useCollectionStore } from '../stores/collection'
+import { useInventoryStore } from '@/stores/inventory'
 
 // Stores
 const profitStore = useProfitStore()
 const collectionStore = useCollectionStore()
+const inventoryStore = useInventoryStore()
 
 // Reactive collection owner
 const collectionOwner = computed(() => collectionStore.collectionOwner)
@@ -99,6 +101,7 @@ const fetchCards = async () => {
   }))
 
   await profitStore.fetchProfit()
+  await inventoryStore.fetchInventory()
 }
 
 // Unmark logic
