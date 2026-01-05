@@ -1,5 +1,5 @@
 <!-- CardManager.vue -->
-<template>
+<!-- <template>
   <v-container class="py-5" fluid justify="center">
     <v-row justify="center">
       <v-col cols="12" md="12">
@@ -198,6 +198,65 @@
       </v-col>
     </v-row>
   </v-container>
+</template> -->
+
+<template>
+
+<v-text-field
+  v-model="search"
+  label="Search cards..."
+  class="mb-4"
+/>
+
+<v-data-table
+  :headers="headers"
+  :items="cards"
+  :search="search"
+  :items-per-page="10"
+  class="elevation-1 bg-secondary text-white"
+  dense
+  variant="outlined"
+>
+  <template v-slot:top>
+    <v-toolbar flat color="transparent" class="bg-primary">
+      <v-toolbar-title>Card Collection</v-toolbar-title>
+      <v-divider class="mx-4" inset vertical />
+      <v-spacer />
+    </v-toolbar>
+  </template>
+
+  <!-- Actions column -->
+  <template v-slot:item.actions="{ item }">
+  <v-btn
+    color="primary"
+    size="small"
+    class="mr-2"
+    variant="outlined"
+    @click="markAsSold(item.raw)"
+  >
+    Mark Sold
+  </v-btn>
+
+  <v-btn
+    color="edit"
+    size="small"
+    class="mr-2"
+    variant="outlined"
+    @click="editCard(item.raw.id)"
+  >
+    Edit
+  </v-btn>
+
+  <v-btn
+    color="error"
+    size="small"
+    variant="outlined"
+    @click="removeCard(item.raw.id)"
+  >
+    Delete
+  </v-btn>
+</template>
+</v-data-table>
 </template>
 
 <script setup>
@@ -208,6 +267,19 @@ import { useProfitStore } from '@/stores/profit'
 import { useCollectionStore } from '../stores/collection'
 import { useInventoryStore } from '@/stores/inventory'
 
+
+const headers = [
+  { title: 'Actions', value: 'actions', sortable: false },
+  { title: 'Card Name', value: 'cardName' },
+  { title: 'Set', value: 'set' },
+  { title: 'Owner', value: 'cardOwner' },
+  { title: 'Bought For ($)', value: 'purchasedPrice' },
+  { title: 'Sell Price ($)', value: 'sellPrice' },
+  { title: 'Condition', value: 'condition' },
+  { title: 'Card Number', value: 'cardNumber' },
+]
+
+const search = ref('')
 const dialog = ref(false)
 const editDialog = ref(false)
 const collectionStore = useCollectionStore()
